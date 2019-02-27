@@ -4,8 +4,8 @@ import os, shutil
 import random as rd
 rd.seed(1)
 
-data_dir = '/home/hyh/local/imagenet/train'
-dst_dir = '/home/hyh/local/miniimagenet'
+data_dir = 'unchi0'
+dst_dir = 'unchi1'
 minitrain = open('outputs/sourcetrain.txt', 'w')
 minival = open('outputs/sourceval.txt', 'w')
 minitest = open('outputs/sourcetest.txt', 'w')
@@ -36,11 +36,12 @@ def read_csv(file_name, img_idx_dict):
 
 """ read train.csv """
 train_idx_dict = {}
-read_csv('train.csv', train_idx_dict)
-read_csv('val.csv', train_idx_dict)
-newf2c = {}
 val_idx_dict = {}
-read_csv('test.csv', val_idx_dict)
+test_idx_dict = {}
+read_csv('train.csv', train_idx_dict)
+read_csv('val.csv', val_idx_dict)
+read_csv('test.csv', test_idx_dict)
+newf2c = {}
 
 """ data copy """
 try:
@@ -54,32 +55,43 @@ try:
 except:
     pass
 cls_idx = 0
+
 for cls in train_idx_dict:
     idx_list = train_idx_dict[cls]
-    rd.shuffle(idx_list)
     try:
         os.mkdir(os.path.join(dst_dir, 'train', cls))
-        os.mkdir(os.path.join(dst_dir, 'val', cls))
     except:
         pass
-    for idx_idx in range(len(idx_list)):
-        idx = idx_list[idx_idx]
+    for idx in idx_list:
         src = os.path.join(data_dir, cls, image_dict[cls][idx])
+        dst = os.path.join(dst_dir, 'train', cls, image_dict[cls][idx])
         if cls not in newf2c:
             newf2c[cls] = str(cls_idx)
             cls_idx += 1
-        if idx_idx >= 50:
-            dst = os.path.join(dst_dir, 'train', cls, image_dict[cls][idx])
-            minitrain.write(src + ' ' + newf2c[cls]+'\n')
-        else:
-            dst = os.path.join(dst_dir, 'val', cls, image_dict[cls][idx])
-            minival.write(src + ' ' + newf2c[cls]+'\n')
-        print src + ' -> ' + dst
+        minitest.write(src + ' ' + newf2c[cls]+'\n')
+        print(src + ' -> ' + dst)
         os.symlink(src,dst)
-        #shutil.copyfile(src, dst)
+
 
 for cls in val_idx_dict:
     idx_list = val_idx_dict[cls]
+    try:
+        os.mkdir(os.path.join(dst_dir, 'val', cls))
+    except:
+        pass
+    for idx in idx_list:
+        src = os.path.join(data_dir, cls, image_dict[cls][idx])
+        dst = os.path.join(dst_dir, 'val', cls, image_dict[cls][idx])
+        if cls not in newf2c:
+            newf2c[cls] = str(cls_idx)
+            cls_idx += 1
+        minitest.write(src + ' ' + newf2c[cls]+'\n')
+        print(src + ' -> ' + dst)
+        os.symlink(src,dst)
+
+
+for cls in test_idx_dict:
+    idx_list = test_idx_dict[cls]
     try:
         os.mkdir(os.path.join(dst_dir, 'test', cls))
     except:
@@ -91,8 +103,9 @@ for cls in val_idx_dict:
             newf2c[cls] = str(cls_idx)
             cls_idx += 1
         minitest.write(src + ' ' + newf2c[cls]+'\n')
-        print src + ' -> ' + dst
+        print(src + ' -> ' + dst)
         os.symlink(src,dst)
+
         #shutil.copyfile(src, dst)
 
 minitest.close()
